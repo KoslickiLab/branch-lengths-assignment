@@ -17,35 +17,42 @@ def main():
     parser.add_argument('-y', '--y', help="y vector file")
     parser.add_argument('-b', '--basis', help="Basis file")
     parser.add_argument('-o', '--outfile_name', help="Output file name.")
-    parser.add_argument('-m', '--method', help="solving method", choices=['nnls', 'bottom-up'])
-    parser.add_argument('-i', '--iter_num', help="Iteration number", default=1)
+    parser.add_argument('-m', '--method', help="solving method", choices=['nnls', 'bottom-up'], default='nnls')
+    parser.add_argument('-i', '--iter_num', type=int, help="Iteration number", default=1)
+    parser.add_argument('-f', '--factor', type=float, help='Selects <--factor>*(A.shape[1]) rows for which to do the NNLS', default=5)
+    parser.add_argument('-r', '--reg_factor', type=float, help='Regularization factor for the NNLS', default=1)
 
     args = parser.parse_args()
 
     tree = tr.read_edge_list(args.tree)
-    if not args.pairwise_distance:
-        pw_matrix, labels = tr.make_distance_matrix(tree)
-    else:
-        pw_matrix = np.load(args.pairwise_distance)
-        labels = np.load(args.basis)
-    if not args.A:
-        A, y, edges = tr.make_matrix_A(tree, pw_matrix, labels)
-    else:
-        A = sparse.load_npz(args.A)
-        y = np.load(args.y)
-        edges = np.load(args.basis)
-        print(edges)
-        edges = list(map(tuple, edges))
-        print(edges)
-    y = np.asarray(y.T)[0]
     solver = solvers.BranchLengthSolver()
     if args.method == 'nnls':
+        if not args.A:
+            if not args.pairwise_distance:
+                pw_matrix, labels = tr.make_distance_matrix(tree)
+            else:
+                pw_matrix = np.load(args.pairwise_distance)
+                labels = np.load(args.basis)
+            A, y, edges = tr.make_matrix_A(tree, pw_matrix, labels)
+        else:
+            A = sparse.load_npz(args.A)
+            y = np.load(args.y)
+            edges = np.load(args.basis)
+            edges = list(map(tuple, edges))
+        y = np.asarray(y.T)[0]
         x = solver.lsq_solver(A.todense(), y)
         solution = dict(zip(edges, x))
         tr.save_edge_lengths_solution(edges, solution, args.outfile_name)
-    else:
+    elif args.method == 'bottom-up':
+        if not args.pairwise_distance:
+            pw_matrix, labels = tr.make_distance_matrix(tree)
+        else:
+            pw_matrix = np.load(args.pairwise_distance)
+            labels = np.load(args.basis)
         solution = solver.deterministic_solver(tree, pw_matrix, labels)
-        tr.save_edge_lengths_solution(edges, solution, args.outfile_name)
+        tr.save_edge_lengths_solution(labels, solution, args.outfile_name)
+    else:
+        print("unrecognized method.")
 
 
 main()

@@ -4,6 +4,7 @@ import random
 from itertools import combinations
 import numpy as np
 import sys
+from scipy import sparse
 
 
 class BranchLengthSolver:
@@ -13,8 +14,16 @@ class BranchLengthSolver:
     def get_approximate_parameters(self):
         pass
 
-    def lsq_solver(self, A, y, bounds=(0, 1), verbose=2):
-        res = lsq_linear(A=A, b=y, bounds=bounds, verbose=verbose)
+    def lsq_solver(self, A, y, bounds=(0, 1), verbose=2, factor=5, reg_factor=1):
+        num_rows = int(factor * A.shape[1])
+        row_indices = np.random.choice(A.shape[0], num_rows)
+        A_small = A[row_indices, :]
+        y_small = y[row_indices]
+        #append a row of 1's to A_small
+        A_small = sparse.vstack([reg_factor * A_small, sparse.csr_matrix(np.ones(A_small.shape[1]))])
+        # append a 0 to y_small
+        y_small = np.append(reg_factor * y_small, 0)
+        res = lsq_linear(A=A_small, b=y_small, bounds=bounds, verbose=verbose)
         return res.x
 
     def deterministic_solver(self, tree, pw_dist, labels, iter_num=1):
