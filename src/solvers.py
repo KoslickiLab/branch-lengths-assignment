@@ -16,13 +16,15 @@ class BranchLengthSolver:
 
     def lsq_solver(self, A, y, bounds=(0, 1), verbose=2, factor=5, reg_factor=1):
         num_rows = int(factor * A.shape[1])
-        row_indices = np.random.choice(A.shape[0], num_rows)
+        if num_rows > A.shape[0]:
+            num_rows = A.shape[0]
+        row_indices = np.random.choice(A.shape[0], num_rows, replace=False)
         A_small = A[row_indices, :]
         y_small = y[row_indices]
         #append a row of 1's to A_small
-        A_small = sparse.vstack([reg_factor * A_small, sparse.csr_matrix(np.ones(A_small.shape[1]))])
+        #A_small = sparse.vstack([reg_factor * A_small, sparse.csr_matrix(np.ones(A_small.shape[1]))])
         # append a 0 to y_small
-        y_small = np.append(reg_factor * y_small, 0)
+        #y_small = np.append(reg_factor * y_small, 0)
         res = lsq_linear(A=A_small, b=y_small, bounds=bounds, verbose=verbose)
         return res.x
 
@@ -37,6 +39,9 @@ class BranchLengthSolver:
             s_tree.get_needed_pairs()
             s_tree.fill_leaf_pairs_distances(pw_dist, labels)
             s_tree.solve_branch_lengths(edge_lengths_solution, len(s_tree.nodes_by_depth) - 1)
+            for (a, b) in list(edge_lengths_solution.keys()):
+                if a.startswith('dummy') or b.startswith('dummy'):
+                    del edge_lengths_solution[(a, b)]
             all_solutions.append(edge_lengths_solution)
         for (a, b) in all_solutions[0].keys():
             all_solutions_ab = [solution[(a, b)] for solution in all_solutions]
@@ -61,7 +66,6 @@ class BranchLengthSolver:
             siblings = list(self.tree._succ[parent].keys())
             sibling = random.choice(siblings)
             while sibling == node:
-                print(sibling)
                 sibling = random.choice(siblings)
             return sibling
 
@@ -202,6 +206,10 @@ class BranchLengthSolver:
 
         def fill_leaf_pairs_distances(self, pw_dist, labels):
             # Can only be run after get_needed_pairs function is run
+            try:
+                _ = pw_dist[0][0]
+            except KeyError:
+                pw_dist = pw_dist['arr_0'] #weird numpy issue
             if len(self.needed_pairs) == 0:
                 print("Please run get_needed_pairs first")
                 return

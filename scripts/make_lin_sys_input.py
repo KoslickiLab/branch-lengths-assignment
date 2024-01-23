@@ -19,7 +19,8 @@ def main():
     pw_dist_matrix, leaf_nodes = tr.make_distance_matrix(tree, args.perturb)
     A, y, edges = tr.make_matrix_A(tree, pw_dist_matrix, leaf_nodes)
     np.save(f"{args.out_dir}/{args.out_prefix}_y.npy", y)
-    np.save(f"{args.out_dir}/{args.out_prefix}_basis.npy", edges)
+    np.save(f"{args.out_dir}/{args.out_prefix}_edges.npy", edges)
+    np.save(f"{args.out_dir}/{args.out_prefix}_leaf_nodes.npy", leaf_nodes)
     np.savez(f"{args.out_dir}/{args.out_prefix}_pw_distance.npz", pw_dist_matrix)
     sparse.save_npz(f"{args.out_dir}/{args.out_prefix}_A.npz", sparse.csr_matrix(A))
 
