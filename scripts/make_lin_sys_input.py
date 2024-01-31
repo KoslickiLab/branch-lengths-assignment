@@ -1,3 +1,4 @@
+import os.path
 import sys
 sys.path.append('../src')
 import trees as tr
@@ -11,18 +12,22 @@ def main():
     parser.add_argument('-t', '--tree_file', type=str, help="tree file")
     parser.add_argument('-od', '--out_dir', type=str, help="outdir", default="../data/lin_sys_input")
     parser.add_argument('-o', '--out_prefix', type=str, help="output files basename")
-    parser.add_argument('-p', '--perturb', action='store_true', default=False)
+    parser.add_argument('-p', '--perturb', type=float, default=0)
 
     args = parser.parse_args()
 
     tree = tr.read_edge_list(args.tree_file)
     pw_dist_matrix, leaf_nodes = tr.make_distance_matrix(tree, args.perturb)
     A, y, edges = tr.make_matrix_A(tree, pw_dist_matrix, leaf_nodes)
-    np.save(f"{args.out_dir}/{args.out_prefix}_y.npy", y)
-    np.save(f"{args.out_dir}/{args.out_prefix}_edges.npy", edges)
-    np.save(f"{args.out_dir}/{args.out_prefix}_leaf_nodes.npy", leaf_nodes)
-    np.savez(f"{args.out_dir}/{args.out_prefix}_pw_distance.npz", pw_dist_matrix)
-    sparse.save_npz(f"{args.out_dir}/{args.out_prefix}_A.npz", sparse.csr_matrix(A))
+    if not args.out_prefix:
+        out_prefix = os.path.basename(args.tree_file) + f"_perturb{args.perturb}"
+    else:
+        out_prefix = args.out_prefix
+    np.save(f"{args.out_dir}/{out_prefix}_y.npy", y)
+    np.save(f"{args.out_dir}/{out_prefix}_edges.npy", edges)
+    np.save(f"{args.out_dir}/{out_prefix}_leaf-nodes.npy", leaf_nodes)
+    np.savez(f"{args.out_dir}/{out_prefix}_pw_distance.npz", pw_dist_matrix)
+    sparse.save_npz(f"{args.out_dir}/{out_prefix}_A.npz", sparse.csr_matrix(A))
 
 
 
