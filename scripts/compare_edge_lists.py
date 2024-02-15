@@ -9,7 +9,7 @@ def main():
     parser = argparse.ArgumentParser(description="Given 2 files of edge lists, this script compares them and "
                                                  "outputs a dot plot.")
     parser.add_argument('-r', '--reference', type=str, help='Reference file. Has to be edge list.')
-    parser.add_argument('-i', '--inferred', type=str, help='Inferred file. Has to be edge list.')
+    parser.add_argument('-i', '--inferred', type=str, help='Inferred file(s). Has to be edge list.')
     parser.add_argument('-x', '--x', type=str, default='original_edge_length')
     parser.add_argument('-y', '--y', type=str, default='inferred_edge_length')
     parser.add_argument('-c', '--color', type=str, help='Color of plot', default='blue')
@@ -17,11 +17,9 @@ def main():
 
 
     args = parser.parse_args()
-
     merged_df = combine_df(args.reference, args.inferred)
-    title = os.path.basename(args.reference)
     additional_args = {'color': args.color,
-                       'title': title,
+                       'file_name': args.inferred,
                        'outfile': args.outfile}
     scatter_plot_single(merged_df, x=args.x, y=args.y, **additional_args)
 

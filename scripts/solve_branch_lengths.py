@@ -19,9 +19,10 @@ def main():
                                               "corresponding to y")
     parser.add_argument('-o', '--outfile_name', help="Output file path.")
     parser.add_argument('-m', '--method', help="solving method", choices=['nnls', 'bottom-up'], default='nnls')
-    parser.add_argument('-i', '--iter_num', type=int, help="Iteration number", default=1)
-    parser.add_argument('-f', '--factor', type=float, help='Selects <--factor>*(A.shape[1]) rows for which to do the NNLS', default=5)
-    parser.add_argument('-r', '--reg_factor', type=float, help='Regularization factor for the NNLS', default=1)
+    parser.add_argument('-i', '--itr_num', type=int, help="Iteration number", default=1)
+    parser.add_argument('-f', '--factor', type=int, help='Selects <--factor>*(A.shape[1]) rows for which to do the NNLS', default=5)
+    parser.add_argument('-r', '--reg_factor', type=float, help='Regularization factor for the NNLS')
+    parser.add_argument('-b', '--bounds', nargs=2, default=[0, 1])
 
     args = parser.parse_args()
 
@@ -41,7 +42,14 @@ def main():
             edges = np.load(args.labels)
             edges = list(map(tuple, edges))
         y = np.asarray(y.T)[0]
-        x = solver.lsq_solver(A.todense(), y)
+        # x = solver.compute_edges_nnls(A.todense(), y, bounds=tuple(args.bounds), num_iter=args.iter_num,
+        #                               factor=args.factor, reg_factor=args.reg_factor)
+        if args.reg_factor:
+            x = solver.lsq_solver(A.todense(), y, factor=args.factor, reg_factor=args.reg_factor,
+                                  bounds=tuple(args.bounds), regularize=True, itr_num=args.itr_num)
+        else:
+            x = solver.lsq_solver(A.todense(), y, factor=args.factor, reg_factor=args.reg_factor,
+                                  bounds=tuple(args.bounds), itr_num=args.itr_num)
         solution = dict(zip(edges, x))
         tr.save_edge_lengths_solution(edges, solution, args.outfile_name)
     elif args.method == 'bottom-up':
@@ -50,7 +58,7 @@ def main():
         else:
             pw_matrix = np.load(args.pairwise_distance)
             leaf_nodes = np.load(args.labels)
-        solution = solver.deterministic_solver(tree, pw_matrix, leaf_nodes)
+        solution = solver.deterministic_solver(tree, pw_matrix, leaf_nodes, args.itr_num)
         tr.save_edge_lengths_solution(solution.keys(), solution, args.outfile_name)
     else:
         print("unrecognized method.")
