@@ -7,6 +7,7 @@ import re
 import plotly.express as px
 import seaborn as sns
 import time
+import subprocess
 
 
 
@@ -102,8 +103,6 @@ def make_df_time(inf_dir, ref_dir, file_pattern):
             continue
         else:
             A_file = glob.glob(f"{ref_dir}/{base_name}*_A.npz")[0]
-            print(base_name)
-            print(A_file)
             y_file = glob.glob(f"{ref_dir}/{base_name}*_y.npy")[0]
             edge_file = glob.glob(f"{ref_dir}/{base_name}*_edges.npy")[0]
             pw_dist = glob.glob(f"{ref_dir}/{base_name}*_pw-distance.npz")[0]
@@ -112,10 +111,10 @@ def make_df_time(inf_dir, ref_dir, file_pattern):
             bu_out = f"{inf_dir}/{base_name}_recover_bottom-up.txt"
             tree_size = re.search("n([^_\.]*)", base_name).group(1)
             print(f"NNLS size {tree_size}")
-            df_dict['Tree size'] += [tree_size, tree_size]
+            df_dict['Tree size'] += [int(tree_size), int(tree_size)]
             df_dict['Method'].append('naive nnls')
             start_time = time.time()
-            os.system(f"python solve_branch_lengths.py -m nnls -t {t} -A {A_file} -y {y_file} -l {edge_file} "
+            subprocess.call(f"python solve_branch_lengths.py -m nnls -t {t} -A {A_file} -y {y_file} -l {edge_file} "
                       f"-o {naive_nnls_out} -f 5 -i 100")
             end_time = time.time()
             df_dict['Time'].append(end_time - start_time)
@@ -123,15 +122,16 @@ def make_df_time(inf_dir, ref_dir, file_pattern):
             df_dict['L1 error'].append(L1_error(comparison_df['original_edge_length'],
                                        comparison_df['inferred_edge_length']))
             print(f"bottom up size {tree_size}")
-            df_dict['Tree size'].append("bottom-up")
+            df_dict['Method'].append("bottom-up")
             start_time = time.time()
-            os.system(f"python solve_branch_lengths.py -m bottom-up -t {t} -pd {pw_dist} -l {basis_file} "
+            subprocess.call(f"python solve_branch_lengths.py -m bottom-up -t {t} -pd {pw_dist} -l {basis_file} "
                       f"-o {bu_out} -i 100")
             end_time = time.time()
             df_dict['Time'].append(end_time - start_time)
             comparison_df = combine_df(t, bu_out)
             df_dict['L1 error'].append(L1_error(comparison_df['original_edge_length'],
                                                 comparison_df['inferred_edge_length']))
+    print(df_dict)
     final_df = pd.DataFrame.from_dict(df_dict)
     print(final_df)
     return final_df
