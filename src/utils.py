@@ -1,12 +1,13 @@
 import numpy as np
 import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
 import os
 import glob
 import re
 import plotly.express as px
 import seaborn as sns
+import time
+
 
 
 def combine_df(ref, inf, orient='horizontal'):
@@ -91,6 +92,52 @@ def make_df_factor(inf_dir, ref_dir, file_pattern):
     print(final_df)
     return final_df
 
+def make_df_time(inf_dir, ref_dir, file_pattern):
+    df_dict = {'Tree size': [], 'Method': [], 'Time': [], 'L1 error': []}
+    ref_files = glob.glob(f"{ref_dir}/{file_pattern}")
+    for t in ref_files:
+        base_name = os.path.basename(t).split('.')[0]
+        A_file = glob.glob(f"{ref_dir}/{base_name}*_A.npz")
+        if len(A_file) < 1:
+            continue
+        else:
+            A_file = glob.glob(f"{ref_dir}/{base_name}*_A.npz")[0]
+            print(base_name)
+            print(A_file)
+            y_file = glob.glob(f"{ref_dir}/{base_name}*_y.npy")[0]
+            edge_file = glob.glob(f"{ref_dir}/{base_name}*_edges.npy")[0]
+            pw_dist = glob.glob(f"{ref_dir}/{base_name}*_pw-distance.npz")[0]
+            basis_file = glob.glob(f"{ref_dir}/{base_name}*_leaf-nodes.npy")[0]
+            naive_nnls_out = f"{inf_dir}/{base_name}_recover_nnls.txt"
+            bu_out = f"{inf_dir}/{base_name}_recover_bottom-up.txt"
+            tree_size = re.search("n([^_\.]*)", base_name).group(1)
+            print(f"NNLS size {tree_size}")
+            df_dict['Tree size'] += [tree_size, tree_size]
+            df_dict['Method'].append('naive nnls')
+            start_time = time.time()
+            os.system(f"python solve_branch_lengths.py -m nnls -t {t} -A {A_file} -y {y_file} -l {edge_file} "
+                      f"-o {naive_nnls_out} -f 5 -i 100")
+            end_time = time.time()
+            df_dict['Time'].append(end_time - start_time)
+            comparison_df = combine_df(t, naive_nnls_out)
+            df_dict['L1 error'].append(L1_error(comparison_df['original_edge_length'],
+                                       comparison_df['inferred_edge_length']))
+            print(f"bottom up size {tree_size}")
+            df_dict['Tree size'].append("bottom-up")
+            start_time = time.time()
+            os.system(f"python solve_branch_lengths.py -m bottom-up -t {t} -pd {pw_dist} -l {basis_file} "
+                      f"-o {bu_out} -i 100")
+            end_time = time.time()
+            df_dict['Time'].append(end_time - start_time)
+            comparison_df = combine_df(t, bu_out)
+            df_dict['L1 error'].append(L1_error(comparison_df['original_edge_length'],
+                                                comparison_df['inferred_edge_length']))
+    final_df = pd.DataFrame.from_dict(df_dict)
+    print(final_df)
+    return final_df
+
+
+
 def scatter_plot_single(df, x, y, **kwargs):
     corr_coeff = round(get_corr_coeff(df[x], df[y])[1, 0], 3)
     l1_err = round(L1_error(df[x], df[y]), 2)
@@ -123,6 +170,7 @@ def format_title(file_name, corr_coeff, l1_err):
         return f"{component_dict['r']}-ary tree no perturbation recovered using {component_dict['method']}\n" \
                f"Correlation Coefficient: {corr_coeff} \n" \
                f"L1 error: {l1_err}"
+
 
 
 def scatter_plot_multiple(df, x, y, **kwargs):

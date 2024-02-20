@@ -2,6 +2,7 @@ import networkx as nx
 import random
 import numpy as np
 import itertools as it
+from line_profiler import profile
 
 
 # create random solvable tree
@@ -12,6 +13,7 @@ def make_tree(r, n, disrupt=False):
     nx.set_edge_attributes(tree, values=1, name="edge_length")
     weighted_tree = nx.DiGraph()
     for edge in tree.edges.data():
+        #new_edge = np.random.uniform(1, 10)
         new_edge = random.random()
         weighted_tree.add_edge(edge[0], edge[1], edge_length=new_edge)
     root = [node for node in tree if weighted_tree.in_degree(node) == 0][0]
@@ -64,15 +66,34 @@ def save_tree_as_edge_list(tree, file_name):
 
 
 # make distance matrix
-def make_distance_matrix(tree: nx.DiGraph, perturb=False):
+def make_distance_matrix(tree: nx.DiGraph, perturb=0, threshold=1):
+    '''
+
+    :param tree:
+    :param perturb: Perturbation factor
+    :param threshold: Chance of perturbation. Perturb only if random.random() > (1-threshold).
+    threshold == 1 => always perturb. threshold == 0 => never perturb. If perturb == 0, nothing will happen
+    regardless of the value of threshold.
+    :return:
+    '''
     leaf_nodes = [node for node in tree if tree.out_degree(node) == 0]
     undir_tree = tree.to_undirected()
     pw_dist = dict(nx.shortest_path_length(undir_tree, weight='edge_length'))
+    print("pw_dist done.")
     pw_dist_matrix = np.ndarray((len(leaf_nodes), len(leaf_nodes)))
     for i, node in enumerate(leaf_nodes):
         for j, another_node in enumerate(leaf_nodes):
-            if perturb:
-                pw_dist_matrix[i][j] = pw_dist_matrix[j][i] = pw_dist[node][another_node] + np.random.lognormal()
+            if perturb > 0:
+                if perturb > 1:
+                    print("Noise level exceeds safety threshold.")
+                else:
+                    noise = pw_dist[node][another_node] * perturb
+                    roll_die = random.random()
+                    if roll_die > (1 - threshold):
+                        pw_dist_matrix[i][j] = pw_dist_matrix[j][i] = random.choice([pw_dist[node][another_node] + noise,
+                                                                                pw_dist[node][another_node] - noise])
+                    else:
+                        pw_dist_matrix[i][j] = pw_dist_matrix[j][i] = pw_dist[node][another_node]
             else:
                 pw_dist_matrix[i][j] = pw_dist_matrix[j][i] = pw_dist[node][another_node]
     return pw_dist_matrix, leaf_nodes
@@ -91,6 +112,26 @@ def make_matrix_A(tree, pw_dist_matrix, pw_dist_labels):
     for i, (a, b) in enumerate(pw_dist_vector):
         path = convert_path_to_edges(leaf_paths[a][b])
         bin_rep = [int(j in path) for j in edges]
+        A[i] = np.array(bin_rep)
+    return np.asmatrix(A), np.asmatrix(y).T, edges
+
+@profile
+def make_matrix_A_fast(tree, pw_dist_matrix, pw_dist_labels):
+    undir_tree = tree.to_undirected()
+    edges = undir_tree.edges  # all edges
+    edge_dict = {e: i for i, e in enumerate(edges)}
+    all_paths = nx.shortest_path(undir_tree)
+    leaf_paths = {k: v for (k, v) in all_paths.items() if k in pw_dist_labels}
+    node_index_dict = {k: v for v, k in enumerate(pw_dist_labels)}
+    pw_dist_vector = list(it.combinations(pw_dist_labels, 2))
+    y = [pw_dist_matrix[node_index_dict[i]][node_index_dict[j]] for (i, j) in it.combinations(pw_dist_labels, 2)]
+    A = np.ndarray(shape=(len(y), len(edges)))
+    for i, (a, b) in enumerate(pw_dist_vector):
+        path = convert_path_to_edges(leaf_paths[a][b])
+        bin_rep = np.zeros(len(edges))
+        for e in path:
+            if e in edge_dict:
+                bin_rep[edge_dict[e]] = 1
         A[i] = np.array(bin_rep)
     return np.asmatrix(A), np.asmatrix(y).T, edges
 
