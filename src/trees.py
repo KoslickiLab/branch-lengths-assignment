@@ -108,7 +108,7 @@ def make_matrix_A(tree, pw_dist_matrix, pw_dist_labels):
     node_index_dict = {k: v for v, k in enumerate(pw_dist_labels)}
     pw_dist_vector = list(it.combinations(pw_dist_labels, 2))
     y = [pw_dist_matrix[node_index_dict[i]][node_index_dict[j]] for (i, j) in it.combinations(pw_dist_labels, 2)]
-    A = np.ndarray(shape=(len(y), len(edges)))
+    A = np.zeros([len(y), len(edges)])
     for i, (a, b) in enumerate(pw_dist_vector):
         path = convert_path_to_edges(leaf_paths[a][b])
         bin_rep = [int(j in path) for j in edges]
@@ -125,14 +125,13 @@ def make_matrix_A_fast(tree, pw_dist_matrix, pw_dist_labels):
     node_index_dict = {k: v for v, k in enumerate(pw_dist_labels)}
     pw_dist_vector = list(it.combinations(pw_dist_labels, 2))
     y = [pw_dist_matrix[node_index_dict[i]][node_index_dict[j]] for (i, j) in it.combinations(pw_dist_labels, 2)]
-    A = np.ndarray(shape=(len(y), len(edges)))
+    A = np.zeros([len(y), len(edges)])
     for i, (a, b) in enumerate(pw_dist_vector):
         path = convert_path_to_edges(leaf_paths[a][b])
-        bin_rep = np.zeros(len(edges))
+        bin_rep = A[i]
         for e in path:
             if e in edge_dict:
                 bin_rep[edge_dict[e]] = 1
-        A[i] = np.array(bin_rep)
     return np.asmatrix(A), np.asmatrix(y).T, edges
 
 def convert_path_to_edges(path):
