@@ -98,7 +98,7 @@ def make_distance_matrix(tree: nx.DiGraph, perturb=0, threshold=1):
                 pw_dist_matrix[i][j] = pw_dist_matrix[j][i] = pw_dist[node][another_node]
     return pw_dist_matrix, leaf_nodes
 
-
+@profile
 # find respective A matrix
 def make_matrix_A(tree, pw_dist_matrix, pw_dist_labels):
     edges = tree.edges  # all edges
