@@ -114,10 +114,9 @@ def make_df_time(inf_dir, ref_dir, file_pattern):
             df_dict['Tree size'] += [int(tree_size), int(tree_size)]
             df_dict['Method'].append('naive nnls')
             start_time = time.time()
-            subprocess.call(f"python solve_branch_lengths.py -m nnls -t {t} -A {A_file} -y {y_file} -l {edge_file} "
+            os.system(f"python solve_branch_lengths.py -m nnls -t {t} -A {A_file} -y {y_file} -l {edge_file} "
                       f"-o {naive_nnls_out} -f 5 -i 100")
             end_time = time.time()
-            print(end_time - start_time)
             df_dict['Time'].append(end_time - start_time)
             comparison_df = combine_df(t, naive_nnls_out)
             df_dict['L1 error'].append(L1_error(comparison_df['original_edge_length'],
@@ -125,7 +124,7 @@ def make_df_time(inf_dir, ref_dir, file_pattern):
             print(f"bottom up size {tree_size}")
             df_dict['Method'].append("bottom-up")
             start_time = time.time()
-            subprocess.call(f"python solve_branch_lengths.py -m bottom-up -t {t} -pd {pw_dist} -l {basis_file} "
+            os.system(f"python solve_branch_lengths.py -m bottom-up -t {t} -pd {pw_dist} -l {basis_file} "
                       f"-o {bu_out} -i 100")
             end_time = time.time()
             df_dict['Time'].append(end_time - start_time)
