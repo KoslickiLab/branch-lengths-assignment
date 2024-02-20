@@ -117,6 +117,7 @@ def make_df_time(inf_dir, ref_dir, file_pattern):
             subprocess.call(f"python solve_branch_lengths.py -m nnls -t {t} -A {A_file} -y {y_file} -l {edge_file} "
                       f"-o {naive_nnls_out} -f 5 -i 100")
             end_time = time.time()
+            print(end_time - start_time)
             df_dict['Time'].append(end_time - start_time)
             comparison_df = combine_df(t, naive_nnls_out)
             df_dict['L1 error'].append(L1_error(comparison_df['original_edge_length'],
