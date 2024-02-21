@@ -5,14 +5,14 @@ from itertools import combinations
 import numpy as np
 import sys
 from scipy import sparse
-import multiprocessing
-from itertools import repeat
+from line_profiler import profile
 
 
 class BranchLengthSolver:
     def __init__(self) -> None:
         pass
 
+    @profile
     def lsq_solver(self, A, y, factor=5, reg_factor=1, bounds=(0, 1), verbose=2, regularize=False, itr_num=1):
         num_rows = int(factor * A.shape[1])
         if num_rows > A.shape[0]:
@@ -40,7 +40,7 @@ class BranchLengthSolver:
     #                                                            repeat(reg_factor)), chunksize=num_iter // num_threads))
     #     x = np.mean(xs, axis=0)
     #     return x
-
+    @profile
     def deterministic_solver(self, tree, pw_dist, labels, iter_num=1):
         s_tree = self.SolvableTree(tree)
         s_tree.group_nodes_by_depth()
