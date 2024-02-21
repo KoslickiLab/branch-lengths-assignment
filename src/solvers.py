@@ -114,6 +114,7 @@ class BranchLengthSolver:
                         self.nodes_by_depth[i + 1].append(dummy_node)
                         dummy_node_count += 1
 
+        @profile
         def get_needed_pairs(self):
             # loop over each level from the root and get needed parents of the level below
             for i in range(len(self.nodes_by_depth) - 1):
