@@ -78,9 +78,10 @@ class BranchLengthSolver:
         def get_sibling(self, node):
             parent = self.get_parent(node)
             siblings = list(self.tree._succ[parent].keys())
+            siblings.remove(node)
             sibling = random.choice(siblings)
-            while sibling == node:
-                sibling = random.choice(siblings)
+            # while sibling == node:
+            #     sibling = random.choice(siblings)
             return sibling
 
         def get_child(self, node):
