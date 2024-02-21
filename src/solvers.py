@@ -74,6 +74,7 @@ class BranchLengthSolver:
         def get_parent(self, node):
             return next(self.tree.predecessors(node))
 
+        @profile
         def get_sibling(self, node):
             parent = self.get_parent(node)
             siblings = list(self.tree._succ[parent].keys())
