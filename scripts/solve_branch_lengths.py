@@ -34,8 +34,14 @@ def main():
                 pw_matrix, labels = tr.make_distance_matrix(tree)
             else:
                 pw_matrix = np.load(args.pairwise_distance)
-                labels = np.load(args.labels)
-            A, y, edges = tr.make_matrix_A(tree, pw_matrix, labels)
+                if args.labels.endswith('.txt'):
+                    with open(args.labels) as f:
+                        leaf_nodes = f.readlines()
+                        leaf_nodes = [l.strip() for l in leaf_nodes]
+                        leaf_nodes = [l.replace('ko:', '') for l in leaf_nodes]
+                else:
+                    leaf_nodes = np.load(args.labels)
+            A, y, edges = tr.make_matrix_A(tree, pw_matrix, leaf_nodes)
         else:
             A = sparse.load_npz(args.A)
             y = np.load(args.y)
