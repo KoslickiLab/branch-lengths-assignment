@@ -42,8 +42,6 @@ def main():
             edges = np.load(args.labels)
             edges = list(map(tuple, edges))
         y = np.asarray(y.T)[0]
-        # x = solver.compute_edges_nnls(A.todense(), y, bounds=tuple(args.bounds), num_iter=args.iter_num,
-        #                               factor=args.factor, reg_factor=args.reg_factor)
         if args.reg_factor:
             x = solver.lsq_solver(A.todense(), y, factor=args.factor, reg_factor=args.reg_factor,
                                   bounds=tuple(args.bounds), regularize=True, itr_num=args.itr_num)
@@ -57,7 +55,13 @@ def main():
             pw_matrix, labels = tr.make_distance_matrix(tree)
         else:
             pw_matrix = np.load(args.pairwise_distance)
-            leaf_nodes = np.load(args.labels)
+            if args.labels.endswith('.txt'):
+                with open(args.labels) as f:
+                    leaf_nodes = f.readlines()
+                    leaf_nodes = [l.strip() for l in leaf_nodes]
+                    leaf_nodes = [l.replace('ko:', '') for l in leaf_nodes]
+            else:
+                leaf_nodes = np.load(args.labels)
         solution = solver.deterministic_solver(tree, pw_matrix, leaf_nodes, args.itr_num)
         tr.save_edge_lengths_solution(solution.keys(), solution, args.outfile_name)
     else:
