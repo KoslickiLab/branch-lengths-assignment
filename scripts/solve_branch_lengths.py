@@ -6,7 +6,7 @@ sys.path.append('..')
 sys.path.append('../src')
 import trees as tr
 import solvers as solvers
-from src.objects.func_tree import FuncTree
+#from src.objects.func_tree import FuncTree
 
 
 
