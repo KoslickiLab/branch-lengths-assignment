@@ -21,4 +21,5 @@ def main():
     utils.plot_line(df, x='Tree size', y='L1 error', hue='Method', out=f"{args.output_dir}/L1_error_vs_size.png")
 
 
-main()
+if __name__ == "__main__":
+    main()
