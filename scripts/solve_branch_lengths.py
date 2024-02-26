@@ -6,6 +6,7 @@ sys.path.append('..')
 sys.path.append('../src')
 import trees as tr
 import solvers as solvers
+from src.objects.func_tree import FuncTree
 
 
 
@@ -31,16 +32,15 @@ def main():
     if args.method == 'nnls':
         if not args.A:
             if not args.pairwise_distance:
-                pw_matrix, labels = tr.make_distance_matrix(tree)
+                pw_matrix, leaf_nodes = tr.make_distance_matrix(tree)
             else:
                 pw_matrix = np.load(args.pairwise_distance)
-                if args.labels.endswith('.txt'):
-                    with open(args.labels) as f:
-                        leaf_nodes = f.readlines()
-                        leaf_nodes = [l.strip() for l in leaf_nodes]
-                        leaf_nodes = [l.replace('ko:', '') for l in leaf_nodes]
-                else:
-                    leaf_nodes = np.load(args.labels)
+                leaf_nodes = tr.read_pw_dist_labels(args.labels)
+            # if len(leaf_nodes) > 1000:
+            #     func_dist_obj = tr.get_KO_pairwise_dist(args.pairwise_distance, args.labels)
+            #     A = tr.get_A_matrix_large(FuncTree(tree), func_dist_obj)
+            #     y = func_dist_obj.get_pairwise_vector()
+            # else:
             A, y, edges = tr.make_matrix_A(tree, pw_matrix, leaf_nodes)
         else:
             A = sparse.load_npz(args.A)
@@ -61,13 +61,7 @@ def main():
             pw_matrix, labels = tr.make_distance_matrix(tree)
         else:
             pw_matrix = np.load(args.pairwise_distance)
-            if args.labels.endswith('.txt'):
-                with open(args.labels) as f:
-                    leaf_nodes = f.readlines()
-                    leaf_nodes = [l.strip() for l in leaf_nodes]
-                    leaf_nodes = [l.replace('ko:', '') for l in leaf_nodes]
-            else:
-                leaf_nodes = np.load(args.labels)
+            leaf_nodes = tr.read_pw_dist_labels(args.labels)
         solution = solver.deterministic_solver(tree, pw_matrix, leaf_nodes, args.itr_num)
         tr.save_edge_lengths_solution(solution.keys(), solution, args.outfile_name)
     else:

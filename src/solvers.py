@@ -6,40 +6,56 @@ import numpy as np
 import sys
 from scipy import sparse
 from line_profiler import profile
+from concurrent.futures import ProcessPoolExecutor
+
 
 
 class BranchLengthSolver:
     def __init__(self) -> None:
         pass
 
-    @profile
+    def lsq_solver_parallel(self, args):
+        A, y, num_rows, bounds, verbose, regularize, reg_factor = args
+        row_indices = np.random.choice(A.shape[0], num_rows, replace=False)
+        A_small = A[row_indices, :]
+        y_small = y[row_indices]
+        if regularize:
+            A_small = sparse.vstack([reg_factor * A_small, sparse.csr_matrix(np.ones(A_small.shape[1]))])
+            y_small = np.append(reg_factor * y_small, 0)
+        res = lsq_linear(A=A_small, b=y_small, bounds=bounds, verbose=verbose)
+        return res.x
+
     def lsq_solver(self, A, y, factor=5, reg_factor=1, bounds=(0, 1), verbose=2, regularize=False, itr_num=1):
         num_rows = int(factor * A.shape[1])
         if num_rows > A.shape[0]:
             num_rows = A.shape[0]
-        all_x = []
-        for i in range(itr_num):
-            row_indices = np.random.choice(A.shape[0], num_rows, replace=False)
-            A_small = A[row_indices, :]
-            y_small = y[row_indices]
-            if regularize:
-                #append a row of 1's to A_small
-                A_small = sparse.vstack([reg_factor * A_small, sparse.csr_matrix(np.ones(A_small.shape[1]))])
-                # append a 0 to y_small
-                y_small = np.append(reg_factor * y_small, 0)
-            res = lsq_linear(A=A_small, b=y_small, bounds=bounds, verbose=verbose)
-            all_x.append(res.x)
+        args = [(A, y, num_rows, bounds, verbose, regularize, reg_factor) for _ in range(itr_num)]
+        with ProcessPoolExecutor() as executor:
+            results = executor.map(self.lsq_solver_parallel, args)
+        all_x = list(results)
         final_x = np.mean(all_x, axis=0)
         return final_x
 
+    # @profile
+    # def lsq_solver(self, A, y, factor=5, reg_factor=1, bounds=(0, 1), verbose=2, regularize=False, itr_num=1):
+    #     num_rows = int(factor * A.shape[1])
+    #     if num_rows > A.shape[0]:
+    #         num_rows = A.shape[0]
+    #     all_x = []
+    #     for i in range(itr_num):
+    #         row_indices = np.random.choice(A.shape[0], num_rows, replace=False)
+    #         A_small = A[row_indices, :]
+    #         y_small = y[row_indices]
+    #         if regularize:
+    #             #append a row of 1's to A_small
+    #             A_small = sparse.vstack([reg_factor * A_small, sparse.csr_matrix(np.ones(A_small.shape[1]))])
+    #             # append a 0 to y_small
+    #             y_small = np.append(reg_factor * y_small, 0)
+    #         res = lsq_linear(A=A_small, b=y_small, bounds=bounds, verbose=verbose)
+    #         all_x.append(res.x)
+    #     final_x = np.mean(all_x, axis=0)
+    #     return final_x
 
-    # def compute_edges_nnls(self, A, y, bounds, num_iter, factor, reg_factor):
-    #     num_threads = 1
-    #     pool = multiprocessing.Pool(num_threads)
-    #     xs = np.array(pool.map(self.least_square_parallel, zip(range(num_iter), repeat(A), repeat(y), repeat(bounds), repeat(factor),
-    #                                                            repeat(reg_factor)), chunksize=num_iter // num_threads))
-    #     x = np.mean(xs, axis=0)
-    #     return x
     @profile
     def deterministic_solver(self, tree, pw_dist, labels, iter_num=1):
         s_tree = self.SolvableTree(tree)
@@ -233,7 +249,10 @@ class BranchLengthSolver:
                 print("Please run get_needed_pairs first")
                 return
             label_pos = {k: v for v, k in enumerate(labels)}
+            print(f"length of label_pos is {len(label_pos)}")
+            print(f"length of needed pair in this level: {len(self.needed_pairs[len(self.nodes_by_depth) - 1])}")
             for (a, b) in self.needed_pairs[len(self.nodes_by_depth) - 1]:
+                print(a, b)
                 p_a = a
                 p_b = b
                 if a.startswith('dummy'):

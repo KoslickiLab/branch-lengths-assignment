@@ -3,6 +3,14 @@ import random
 import numpy as np
 import itertools as it
 from line_profiler import profile
+import multiprocessing
+from scipy import sparse
+from src.objects.func_tree import FuncTree
+from src.objects.func_leaf_distance import FuncTreeLeafPairwiseDistances
+try:
+    from blist import blist
+except ModuleNotFoundError:
+    print("Warning: Could not import blist. Please install blist to speed up the path matrix calculation.")
 
 
 # create random solvable tree
@@ -48,7 +56,8 @@ def check_solvable(tree:nx.DiGraph):
 def read_edge_list(file):
     tree = nx.read_edgelist(file, comments='#', create_using=nx.DiGraph,
                             delimiter='\t', nodetype=str, data=(('edge_length', float),))
-    return tree
+    return
+
 
 def get_root(tree):
     root = [node for node in tree if tree.in_degree(node) == 0]
@@ -98,6 +107,33 @@ def make_distance_matrix(tree: nx.DiGraph, perturb=0, threshold=1):
                 pw_dist_matrix[i][j] = pw_dist_matrix[j][i] = pw_dist[node][another_node]
     return pw_dist_matrix, leaf_nodes
 
+
+def get_KO_pairwise_dist(distance_file, distances_label_file) -> FuncTreeLeafPairwiseDistances:
+    """
+    Given KO distance files, return pairwise distance object.
+    :param distances_file: npz file containing the distances from the output of sourmash compare
+    :param distances_labels_file: text file containing the labels from the output of sourmash compare
+    """
+    pw_dist = np.load(distance_file)
+    KO_dist_labels = read_pw_dist_labels(distances_label_file)
+    KO_dist_indices = {node: i for i, node in enumerate(KO_dist_labels)}
+    return FuncTreeLeafPairwiseDistances(pw_dist, KO_dist_labels, KO_dist_indices)
+
+def read_pw_dist_labels(label_file):
+    """
+    Reads file and return as a list
+    :param pw_dist_label_file:
+    :return: list of labels in order
+    """
+    if label_file.endswith('.txt'):
+        with open(label_file) as f:
+            labels = f.readlines()
+            labels = [l.strip() for l in labels]
+            labels = [l.replace('ko:', '') for l in labels]
+    else:
+        labels = np.load(label_file)
+    return labels
+
 # find respective A matrix
 def make_matrix_A(tree, pw_dist_matrix, pw_dist_labels):
     edges = tree.edges  # all edges
@@ -113,6 +149,8 @@ def make_matrix_A(tree, pw_dist_matrix, pw_dist_labels):
         bin_rep = [int(j in path) for j in edges]
         A[i] = np.array(bin_rep)
     return np.asmatrix(A), np.asmatrix(y).T, edges
+
+
 
 @profile
 def make_matrix_A_fast(tree, pw_dist_matrix, pw_dist_labels):
@@ -132,6 +170,8 @@ def make_matrix_A_fast(tree, pw_dist_matrix, pw_dist_labels):
             if e in edge_dict:
                 bin_rep[edge_dict[e]] = 1
     return np.asmatrix(A), np.asmatrix(y).T, edges
+
+
 
 def convert_path_to_edges(path):
     edges = []
