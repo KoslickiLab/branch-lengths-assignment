@@ -56,7 +56,7 @@ def check_solvable(tree:nx.DiGraph):
 def read_edge_list(file):
     tree = nx.read_edgelist(file, comments='#', create_using=nx.DiGraph,
                             delimiter='\t', nodetype=str, data=(('edge_length', float),))
-    return
+    return tree
 
 
 def get_root(tree):
