@@ -28,7 +28,7 @@ def combine_df(ref, inf, orient='horizontal'):
 def make_df_perturbation_threshold(inf_dir, ref_dir, ref_file_pattern, inf_file_suffix=''):
     ref_files = glob.glob(f"{ref_dir}/{ref_file_pattern}*")
     file_prefixes = [os.path.basename(f).split('.')[0] for f in ref_files]
-    df_dict = {'method': [], 'perturbation': [], 'threshold': [], 'L1 error': [], 'Corr coeff': []}
+    df_dict = {'Method': [], 'Perturbation proportion': [], 'Perturbation likelihood': [], 'L1 error': []}
     for i, p in enumerate(file_prefixes):
         inf_files = glob.glob(f"{inf_dir}/{p}*{inf_file_suffix}*")
         if len(inf_files) == 0:
@@ -39,12 +39,10 @@ def make_df_perturbation_threshold(inf_dir, ref_dir, ref_file_pattern, inf_file_
             perturb = re.search("perturb-(.*)_threshold", f).group(1)
             df = combine_df(ref=ref_files[i], inf=f)
             l1_error = L1_error(df['original_edge_length'], df['inferred_edge_length'])
-            corr_coeff = get_corr_coeff(df['original_edge_length'], df['inferred_edge_length'])
-            df_dict['method'].append(method)
-            df_dict['threshold'].append(float(threshold))
-            df_dict['perturbation'].append(float(perturb))
+            df_dict['Method'].append(method)
+            df_dict['Perturbation likelihood'].append(float(threshold))
+            df_dict['Perturbation proportion'].append(float(perturb))
             df_dict['L1 error'].append(float(l1_error))
-            df_dict['Corr coeff'].append(float(corr_coeff))
     final_df = pd.DataFrame.from_dict(df_dict)
     print(final_df)
     return final_df
@@ -112,10 +110,11 @@ def make_df_time(inf_dir, ref_dir, file_pattern):
             tree_size = re.search("n([^_\.]*)", base_name).group(1)
             print(f"NNLS size {tree_size}")
             df_dict['Tree size'] += [int(tree_size), int(tree_size)]
+            print(f"tree size: {tree_size}")
             df_dict['Method'].append('naive nnls')
             start_time = time.time()
             os.system(f"python solve_branch_lengths.py -m nnls -t {t} -A {A_file} -y {y_file} -l {edge_file} "
-                      f"-o {naive_nnls_out} -f 5 -i 100")
+                      f"-o {naive_nnls_out} -pd {pw_dist} -f 5 -i 1 -b -1 0")
             end_time = time.time()
             df_dict['Time'].append(end_time - start_time)
             comparison_df = combine_df(t, naive_nnls_out)
@@ -125,7 +124,7 @@ def make_df_time(inf_dir, ref_dir, file_pattern):
             df_dict['Method'].append("bottom-up")
             start_time = time.time()
             os.system(f"python solve_branch_lengths.py -m bottom-up -t {t} -pd {pw_dist} -l {basis_file} "
-                      f"-o {bu_out} -i 100")
+                      f"-o {bu_out} -i 1")
             end_time = time.time()
             df_dict['Time'].append(end_time - start_time)
             comparison_df = combine_df(t, bu_out)
@@ -139,7 +138,9 @@ def make_df_time(inf_dir, ref_dir, file_pattern):
 
 
 def scatter_plot_single(df, x, y, **kwargs):
-    corr_coeff = round(get_corr_coeff(df[x], df[y])[1, 0], 3)
+    corr_coeff = get_corr_coeff(df[x], df[y])
+    corr_coeff = round(corr_coeff, 3)
+    print(f"corr_coeff = {corr_coeff}")
     l1_err = round(L1_error(df[x], df[y]), 2)
     sns.scatterplot(data=df, x=x, y=y, color=kwargs['color'])
     plt.title(format_title(kwargs['file_name'], corr_coeff, l1_err))
@@ -155,7 +156,7 @@ def format_title(file_name, corr_coeff, l1_err):
     for component in components:
         if component.startswith('repeat') or component.startswith('recover'):
             pass
-        elif component.startswith('naive') or component.startswith('regularized') or component.startswith('bottom'):
+        elif component.startswith('naive') or component.startswith('regularized') or component.startswith('bottom') or component.startswith('nnls'):
             component_dict['method'] = component
         elif component.startswith('r') and len(component) < 5:
             component_dict['r'] = component[1:]
