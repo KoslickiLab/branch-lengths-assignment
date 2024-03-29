@@ -68,7 +68,7 @@ class BranchLengthSolver:
             s_tree.get_needed_pairs()
             s_tree.fill_leaf_pairs_distances(pw_dist, labels)
             s_tree.solve_branch_lengths(edge_lengths_solution, len(s_tree.nodes_by_depth) - 1)
-            s_tree.postprocess_branch_lengths(edge_lengths_solution)
+            s_tree.post_process(edge_lengths_solution)
             for (a, b) in list(edge_lengths_solution.keys()):
                 if a.startswith('dummy') or b.startswith('dummy'):
                     del edge_lengths_solution[(a, b)]
