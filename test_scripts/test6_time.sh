@@ -25,3 +25,6 @@ input_dir='../data/test_data/test6'
 #} | xargs -I{} -P4 bash -c 'eval $1' -- {} &
 
 python time_solver.py -r ../data/test_data/test6 -i ../data/test_data/test6/results
+
+python plot_from_df.py -df ../data/plots/time_results_1710817642.csv -y "Time" -x "Tree size" -hue Method -o ../data/plots/time_vs_size.png -t line
+python plot_from_df.py -df ../data/plots/time_results_1710817642.csv -y "L1 error" -x "Tree size" -hue Method -o ../data/plots/L1_error_vs_size.png -t line

@@ -3,10 +3,7 @@ import random
 import numpy as np
 import itertools as it
 from line_profiler import profile
-import multiprocessing
-from scipy import sparse
-from src.objects.func_tree import FuncTree
-from src.objects.func_leaf_distance import FuncTreeLeafPairwiseDistances
+from objects.func_leaf_distance import FuncTreeLeafPairwiseDistances
 try:
     from blist import blist
 except ModuleNotFoundError:
@@ -106,6 +103,15 @@ def make_distance_matrix(tree: nx.DiGraph, perturb=0, threshold=1):
             else:
                 pw_dist_matrix[i][j] = pw_dist_matrix[j][i] = pw_dist[node][another_node]
     return pw_dist_matrix, leaf_nodes
+
+def compute_leaf_pw_dist(tree):
+    leaf_nodes = [node for node in tree if tree.out_degree(node) == 0]
+    undir_tree = tree.to_undirected()
+    pw_dist = dict(nx.shortest_path_length(undir_tree, weight='edge_length'))
+    leaf_pw_dist = {}
+    for (a, b) in it.combinations(leaf_nodes, 2):
+        leaf_pw_dist[(a, b)] = pw_dist[a][b]
+    return leaf_pw_dist
 
 
 def get_KO_pairwise_dist(distance_file, distances_label_file) -> FuncTreeLeafPairwiseDistances:

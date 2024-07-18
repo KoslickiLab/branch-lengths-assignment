@@ -33,7 +33,7 @@ class BranchLengthSolver:
     #     with ProcessPoolExecutor() as executor:
     #         print("pooling")
     #         results = executor.map(self.lsq_solver_parallel, args)
-    #     all_x = list(results)
+    #     all_x = list(results)kddi
     #     final_x = np.mean(all_x, axis=0)
     #     return final_x
 
