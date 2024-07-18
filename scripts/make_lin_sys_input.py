@@ -5,10 +5,7 @@ import trees as tr
 import argparse
 from scipy import sparse
 import numpy as np
-from line_profiler import profile
 
-
-@profile
 def main():
     parser = argparse.ArgumentParser(description="Produce matrix A, y and edges")
     parser.add_argument('-t', '--tree_file', type=str, help="tree file")
