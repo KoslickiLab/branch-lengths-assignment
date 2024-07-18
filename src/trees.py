@@ -2,7 +2,6 @@ import networkx as nx
 import random
 import numpy as np
 import itertools as it
-from line_profiler import profile
 from objects.func_leaf_distance import FuncTreeLeafPairwiseDistances
 try:
     from blist import blist
@@ -158,7 +157,6 @@ def make_matrix_A(tree, pw_dist_matrix, pw_dist_labels):
 
 
 
-@profile
 def make_matrix_A_fast(tree, pw_dist_matrix, pw_dist_labels):
     undir_tree = tree.to_undirected()
     edges = undir_tree.edges  # all edges
