@@ -1,0 +1,9 @@
+conda install blist==1.3.6
+conda install matplotlib==3.6.3
+conda install networkx==3.1
+conda install numpy==1.23.5
+conda install pandas==1.5.3
+conda install plotly==5.18.0
+conda install scikit_bio==0.5.8
+conda install scipy==1.10.0
+conda install seaborn==0.13.2
