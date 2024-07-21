@@ -5,9 +5,6 @@ from itertools import combinations
 import numpy as np
 import sys
 from scipy import sparse
-from line_profiler import profile
-from concurrent.futures import ProcessPoolExecutor
-
 
 
 class BranchLengthSolver:
@@ -91,7 +88,6 @@ class BranchLengthSolver:
         def get_parent(self, node):
             return next(self.tree.predecessors(node))
 
-        @profile
         def get_sibling(self, node):
             parent = self.get_parent(node)
             siblings = list(self.tree._succ[parent].keys())
@@ -136,7 +132,6 @@ class BranchLengthSolver:
                         self.nodes_by_depth[i + 1].append(dummy_node)
                         dummy_node_count += 1
 
-        @profile
         def get_needed_pairs(self):
             # loop over each level from the root and get needed parents of the level below
             for i in range(len(self.nodes_by_depth) - 1):
