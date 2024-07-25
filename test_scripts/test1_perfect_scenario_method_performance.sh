@@ -23,6 +23,7 @@ do
 done
 
 #generate output using 3 methods
+mkdir -p ../data/test_data/test1/results
 for tree in "$output_dir"/*.txt
 do
   echo $tree

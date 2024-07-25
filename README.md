@@ -24,4 +24,6 @@ bash test2_distance_matrix_with_errors.sh
 cd ..
 ```
 
+## Ex
+
 
