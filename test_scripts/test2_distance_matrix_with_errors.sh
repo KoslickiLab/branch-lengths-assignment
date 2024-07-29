@@ -34,7 +34,7 @@ do
     do
     base_name=$(basename $f .txt)"_perturbed"
     echo $base_name
-    python make_lin_sys_input.py -t $f -od $output_dir -p $p -s $s
+    python make_lin_sys_input.py -t $f -od $dir -p $p -s $s
     done
   done
   done
