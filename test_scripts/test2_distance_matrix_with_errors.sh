@@ -3,7 +3,7 @@ set -e
 
 cd ../scripts
 
-#output_dir='../data/test_data/test2'
+output_dir='../data/test_data/test2'
 #mkdir "$output_dir"/results
 #mkdir -p ../data/test_data/test2/r3
 #mkdir -p ../data/test_data/test2/r5
@@ -11,7 +11,7 @@ cd ../scripts
 #r3_dir="../data/test_data/test2/r3"
 #r5_dir="../data/test_data/test2/r5"
 #r7_dir="../data/test_data/test2/r7"
-#all_input_dir=($r3_dir $r5_dir $r7_dir)
+all_input_dir=($r3_dir $r5_dir $r7_dir)
 ##generate trees
 #for r in {3,5,7}
 #do
