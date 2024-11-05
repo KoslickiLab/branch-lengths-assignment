@@ -34,4 +34,13 @@ cd ..
 ```
 
 ## Application: FunUniFrac
+### Obtaining the KEGG data
+The details for KEGG data extraction can be found in the [extraction repo](https://github.com/KoslickiLab/KEGG_data_extraction).
+A cleaned version of KEGG tree rooted at `ko00001` can be found in `data/fununifrac_data/kegg_trees/kegg_ko00001_no_edge_lengths.txt`. 
 
+### Obtaining pairwise distance matrix
+To download a pre-built version of the pairwise distance matrix, do the following:
+```bash
+cd data/fununifrac_data/pw_distance_files
+wget https://zenodo.org/records/13129003/files/KOs_sketched_scaled_10_k_5
+```
