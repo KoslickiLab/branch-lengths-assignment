@@ -28,11 +28,11 @@ for tree in "$output_dir"/*.txt
 do
   echo $tree
   base_name=$(basename $tree .txt)
-  pd="$output_dir"/"$base_name"_no_perturb_pw_distance.npz
+  pd="$output_dir"/"$base_name"_no_perturb_pw-distance.npz
   A_file="$output_dir"/"$base_name"_no_perturb_A.npz
   y_file="$output_dir"/"$base_name"_no_perturb_y.npy
   edge_file="$output_dir"/"$base_name"_no_perturb_edges.npy
-  leaf_nodes_file="$output_dir"/"$base_name"_no_perturb_leaf_nodes.npy
+  leaf_nodes_file="$output_dir"/"$base_name"_no_perturb_leaf-nodes.npy
   out_file_prefix="$output_dir"/results/"$base_name"_no_perturb_recover
   python solve_branch_lengths.py -m nnls -t $tree -A $A_file -y $y_file -l $edge_file -o "$out_file_prefix"_naive_nnls.txt -f 5 -i 100
   python solve_branch_lengths.py -m nnls -t $tree -A $A_file -y $y_file -l $edge_file -o "$out_file_prefix"_regularized_nnls.txt -f 5 -i 100 -r 1
