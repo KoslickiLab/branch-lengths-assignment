@@ -2,6 +2,9 @@
 ```bash
 git clone https://github.com/KoslickiLab/branch-lengths-assignment.git
 cd branch-lengths-assignment
+conda create -n branch-lengths-assignment python=3.9
+conda activate branch-lengths-assignment
+conda install -y blist
 pip install -r requirements.txt
 ```
 
